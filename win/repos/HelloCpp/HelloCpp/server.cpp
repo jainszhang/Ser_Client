@@ -122,10 +122,15 @@ int main()
 	while (true)
 	{
 
-		DataHeader header = {};
-		//5.接收客户端的数据c
-		int nLen = recv(_cSock, (char *)&header, sizeof(DataHeader), 0);
+		//DataHeader header = {};
 
+
+		//缓冲区
+		char szRecv[1024] = {};
+
+		//5.接收客户端的数据c
+		int nLen = recv(_cSock, (char *)szRecv, sizeof(DataHeader), 0);
+		DataHeader* header = (DataHeader*)szRecv;
 		if (nLen <= 0)
 		{
 			printf("客户端已退出，任务结束\n");
@@ -134,14 +139,13 @@ int main()
 
 //		
 
-		switch (header.cmd)
+		switch (header->cmd)
 		{
 			case CMD_LOGIN:
 				{
-
-					Login login = {};
-					recv(_cSock, (char *)&login+sizeof(DataHeader), sizeof(Login)- sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
-					printf("收到header--命令%d，数据长度%d，username=%s,passwd=%s\n", login.cmd, login.dataLength,login.userName,login.PassWord);
+					recv(_cSock, szRecv+sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
+					Login* login = (Login*)szRecv;
+					printf("收到header--命令%d，数据长度%d，username=%s,passwd=%s\n", login->cmd, login->dataLength,login->userName,login->PassWord);
 					LoginResult ret;
 					
 					send(_cSock, (char *)&ret, sizeof(LoginResult), 0);
@@ -150,9 +154,10 @@ int main()
 				break;
 			case CMD_LOGINOUT:
 				{
-					LoginOut loginout = {};
-					recv(_cSock, (char *)&loginout+sizeof(DataHeader), sizeof(LoginOut)- sizeof(DataHeader), 0);
-					printf("收到header--命令%d，数据长度%d，username=%s\n", loginout.cmd, loginout.dataLength, loginout.userName);
+					
+					recv(_cSock, szRecv+sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+					LoginOut* loginout = (LoginOut*)szRecv;
+					printf("收到header--命令%d，数据长度%d，username=%s\n", loginout->cmd, loginout->dataLength, loginout->userName);
 					LoginOutResult ret;
 					send(_cSock, (char *)&ret, sizeof(LoginOutResult), 0);
 				
@@ -162,8 +167,7 @@ int main()
 
 			default:
 				{	
-					header.cmd = CMD_ERROR;
-					header.dataLength = 0;
+					DataHeader header = { 0,CMD_ERROR };
 					send(_cSock, (char*)&header, sizeof(DataHeader), 0);
 				}
 				break;
