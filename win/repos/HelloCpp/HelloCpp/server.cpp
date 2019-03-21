@@ -13,7 +13,9 @@
 enum CMD
 {
 	CMD_LOGIN,
+	CMD_LOGIN_RESULT,
 	CMD_LOGINOUT,
+	CMD_LOGINOUT_RESULT,
 	CMD_ERROR
 };
 ///消息头
@@ -24,27 +26,50 @@ struct DataHeader
 };
 
 //DataPackage
-struct Login
+struct Login :public DataHeader
 {
+	Login()
+	{
+		dataLength = sizeof(Login);
+		cmd = CMD_LOGIN;
+	}
 	char userName[32];
 	char PassWord[32];
 };
 
-struct LoginResult
+struct LoginResult :public DataHeader
 {
+	LoginResult()
+	{
+		dataLength = sizeof(LoginResult);
+		cmd = CMD_LOGIN_RESULT;
+		result = 0;
+	}
 	int result;
 
 };
 
-struct LoginOut
+struct LoginOut :public DataHeader
 {
+	LoginOut()
+	{
+		dataLength = sizeof(LoginOut);
+		cmd = CMD_LOGINOUT;
+	}
 	char userName[32];
 };
-struct LoginOutResult
+struct LoginOutResult :public DataHeader
 {
+	LoginOutResult()
+	{
+		dataLength = sizeof(LoginOutResult);
+		cmd = CMD_LOGINOUT_RESULT;
+		result = 0;
+	}
 	int result;
 
 };
+
 int main()
 {
 	//启动windows socket2.x环境
@@ -107,7 +132,7 @@ int main()
 			break;
 		}
 
-		printf("收到header--命令%d，数据长度%d\n",header.cmd,header.dataLength);
+//		
 
 		switch (header.cmd)
 		{
@@ -115,32 +140,33 @@ int main()
 				{
 
 					Login login = {};
-					recv(_cSock, (char *)&login, sizeof(Login), 0);
-					//忽略判断用户名和密码
-					LoginResult ret = {1};
-					send(_cSock, (char *)&header, sizeof(DataHeader), 0);
+					recv(_cSock, (char *)&login+sizeof(DataHeader), sizeof(Login)- sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
+					printf("收到header--命令%d，数据长度%d，username=%s,passwd=%s\n", login.cmd, login.dataLength,login.userName,login.PassWord);
+					LoginResult ret;
+					
 					send(_cSock, (char *)&ret, sizeof(LoginResult), 0);
-					break;
+					
 				}
-				
-			case CMD_LOGINOUT:
-			{
-				LoginOut loginout = {};
-				recv(_cSock, (char *)&loginout, sizeof(LoginOut), 0);
-				LoginOutResult ret = { 1 };
-				send(_cSock, (char *)&header, sizeof(DataHeader), 0);
-				send(_cSock, (char *)&ret, sizeof(LoginOutResult), 0);
 				break;
-			}
+			case CMD_LOGINOUT:
+				{
+					LoginOut loginout = {};
+					recv(_cSock, (char *)&loginout+sizeof(DataHeader), sizeof(LoginOut)- sizeof(DataHeader), 0);
+					printf("收到header--命令%d，数据长度%d，username=%s\n", loginout.cmd, loginout.dataLength, loginout.userName);
+					LoginOutResult ret;
+					send(_cSock, (char *)&ret, sizeof(LoginOutResult), 0);
+				
+				}
+				break;
 		
 
 			default:
-			{	
-				header.cmd = CMD_ERROR;
-				header.dataLength = 0;
-				send(_cSock, (char*)&header, sizeof(DataHeader), 0);
+				{	
+					header.cmd = CMD_ERROR;
+					header.dataLength = 0;
+					send(_cSock, (char*)&header, sizeof(DataHeader), 0);
+				}
 				break;
-			}
 		}
 		
 	}

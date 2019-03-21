@@ -13,7 +13,9 @@
 enum CMD
 {
 	CMD_LOGIN,
+	CMD_LOGIN_RESULT,
 	CMD_LOGINOUT,
+	CMD_LOGINOUT_RESULT,
 	CMD_ERROR
 };
 ///消息头
@@ -24,24 +26,44 @@ struct DataHeader
 };
 
 //DataPackage
-struct Login
+struct Login:public DataHeader
 {
+	Login()
+	{
+		dataLength = sizeof(Login);
+		cmd = CMD_LOGIN;
+	}
 	char userName[32];
 	char PassWord[32];
 };
 
-struct LoginResult
+struct LoginResult:public DataHeader
 {
+	LoginResult()
+	{
+		dataLength = sizeof(LoginResult);
+		cmd = CMD_LOGIN_RESULT;
+	}
 	int result;
 
 };
 
-struct LoginOut
+struct LoginOut:public DataHeader
 {
+	LoginOut()
+	{
+		dataLength = sizeof(LoginOut);
+		cmd = CMD_LOGINOUT;
+	}
 	char userName[32];
 };
-struct LoginOutResult
+struct LoginOutResult:public DataHeader
 {
+	LoginOutResult()
+	{
+		dataLength = sizeof(LoginOutResult);
+		cmd = CMD_LOGINOUT_RESULT;
+	}
 	int result;
 
 };
@@ -79,6 +101,8 @@ int main()
 	}
 
 
+
+
 	char cmdBuf[128] = {};
 	while (true)
 	{
@@ -91,33 +115,29 @@ int main()
 			printf("收到exit，任务结束\n");
 			break;
 		}
+
 		else if (0 == strcmp(cmdBuf, "login"))
 		{
-			Login login = {"zj","jains"};
-			DataHeader dh = {sizeof(Login),CMD_LOGIN};
-
-			send(_sock, (const char *)&dh, sizeof(dh), 0);
+			//向服务器发送请求
+			Login login;
+			strcpy(login.userName, "zj");
+			strcpy(login.PassWord, "jainss");
 			send(_sock, (const char *)&login, sizeof(login), 0);
 
 			//接收服务器返回数据
-			DataHeader retHeader = {};
 			LoginResult loginRet = {};
-			recv(_sock,(char*)&retHeader,sizeof(retHeader),0);
 			recv(_sock, (char*)&loginRet, sizeof(loginRet), 0);
 
 			printf("LoginResult:%d\n",loginRet.result);
 		}
 		else if (0 == strcmp(cmdBuf, "loginout"))
 		{
-			LoginOut logout = {};
-			DataHeader dh = { sizeof(logout), CMD_LOGINOUT};
-			send(_sock, (const char *)&dh, sizeof(dh), 0);
+			LoginOut logout;
+			strcpy(logout.userName, "zj");
 			send(_sock, (const char *)&logout, sizeof(logout), 0);
 
 			//接收服务器返回数据
-			DataHeader retHeader = {};
 			LoginOutResult loginoutRet = {};
-			recv(_sock, (char*)&retHeader, sizeof(retHeader), 0);
 			recv(_sock, (char*)&loginoutRet, sizeof(loginoutRet), 0);
 			printf("LoginOutResult:%d\n", loginoutRet.result);
 		}
