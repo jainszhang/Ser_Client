@@ -9,11 +9,11 @@ select模型介绍：
 	非阻塞：非阻塞和阻塞的概念相对，是指不能立刻得到借过前，该函数不会阻塞当前进程，而回立刻返回。
 2.select模型
 	int select (
-	  int nfds,                           
-	  fd_set FAR * readfds,               
-	  fd_set FAR * writefds,              
-	  fd_set FAR * exceptfds,             
-	  const struct timeval FAR * timeout  
+	  int nfds,
+	  fd_set FAR * readfds,
+	  fd_set FAR * writefds,
+	  fd_set FAR * exceptfds,
+	  const struct timeval FAR * timeout
 	);
 	三个参数一个用于检查可读性（readfds），一个用于检查可写性（writefds），另一个用于例外数据（ excepfds）
 	注意：select返回后，它会修改每个fd_set结构，删除那些不存在待决 I / O操作的套接字句柄。
