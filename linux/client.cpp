@@ -101,7 +101,7 @@ int processor(SOCKET _cSock)
 	DataHeader* header = (DataHeader*)szRecv;
 	if (nLen <= 0)
 	{
-		printf("disconnected with server，task end\n");
+		printf("disconnected with server, task end\n");
 		return -1;
 	}
 
@@ -111,6 +111,7 @@ int processor(SOCKET _cSock)
 	case CMD_LOGIN_RESULT:
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
+		printf("login result\n");
 		LoginResult* login_Result = (LoginResult*)szRecv;
 		printf("server returned data：CMD_LOGIN_RESULT，data length%d\n", login_Result->dataLength);
 	}
@@ -192,10 +193,10 @@ int main()
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.s_addr = inet_addr("192.168.236.128");
+	_sin.sin_addr.s_addr = inet_addr("127.0.0.1");//win:192.168.236.128
 	if(SOCKET_ERROR == connect(_sock, (sockaddr*)&_sin, sizeof(sockaddr_in)))
 	{
-		printf("ERROR，connect socket failed...\n");
+		printf("ERROR, connect socket failed...\n");
 	}
 	else
 	{
