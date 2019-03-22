@@ -102,14 +102,14 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		LoginResult* login_Result = (LoginResult*)szRecv;
-		printf("服务器数据消息：CMD_LOGIN_RESULT，数据长度%d\n", login_Result->dataLength);
+		printf("服务器返回的数据消息：CMD_LOGIN_RESULT，数据长度%d\n", login_Result->dataLength);
 	}
 	break;
-	case CMD_LOGINOUT:
+	case CMD_LOGINOUT_RESULT:
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		LoginOutResult* loginout_Result = (LoginOutResult*)szRecv;
-		printf("服务器数据消息：CMD_LOGINOUT_RESULT，数据长度%d\n", loginout_Result->dataLength);
+		printf("服务器返回的数据消息：CMD_LOGINOUT_RESULT，数据长度%d\n", loginout_Result->dataLength);
 	}
 	break;
 
@@ -117,7 +117,7 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		NewUserJoin* userJoin = (NewUserJoin*)szRecv;
-		printf("服务器数据消息：NEW_USER_JOIN，数据长度%d\n", userJoin->dataLength);
+		printf("服务器返回的数据消息：NEW_USER_JOIN，数据长度%d\n", userJoin->dataLength);
 	}
 	break;
 	}
@@ -202,6 +202,7 @@ int main()
 		FD_ZERO(&fdReads);
 		FD_SET(_sock, &fdReads);
 		timeval t = { 1,0 };
+		//检测该sock上有没有IO操作，如果有保留该sock
 		int ret = select(_sock, &fdReads, 0, 0, &t);
 		if (ret < 0)
 		{

@@ -94,7 +94,7 @@ int processor(SOCKET _cSock)
 	//缓冲区
 	char szRecv[1024] = {};
 
-	//5.接收客户端的数据c
+	//5.接收客户端的数据头包
 	int nLen = recv(_cSock, (char *)szRecv, sizeof(DataHeader), 0);
 	DataHeader* header = (DataHeader*)szRecv;
 	if (nLen <= 0)
@@ -107,6 +107,7 @@ int processor(SOCKET _cSock)
 	{
 	case CMD_LOGIN:
 	{
+		///接收数据体
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		Login* login = (Login*)szRecv;
 		printf("收到header--命令%d，数据长度%d，username=%s,passwd=%s\n", login->cmd, login->dataLength, login->userName, login->PassWord);
@@ -194,6 +195,7 @@ int main()
 		FD_SET(_sock, &fdExp);
 
 
+		//每次检查fdRead之前，必须把所有的sock都设置到里面去，select检查内部sock是否有IO操作
 		for (int n = (int)g_clients.size() - 1; n >= 0; n--)
 		{
 			FD_SET(g_clients[n], &fdRead);
@@ -204,6 +206,7 @@ int main()
 		///既是所有文件描述符最大值，在windows中参数可以写为0
 		timeval t = {1,0};
 
+		///一旦sock有IO操作，select就会把该sock选择出来，把那些没有IO操作的sock删除
 		int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&t);
 		if (0 > ret)
 		{
@@ -211,7 +214,7 @@ int main()
 			break;
 		}
 		
-		//判断描述符是否在集合中
+		//判断那个有IO操作的sock是否在集合中
 		if (FD_ISSET(_sock, &fdRead))
 		{
 			FD_CLR(_sock, &fdRead);
@@ -239,6 +242,7 @@ int main()
 			}
 		}
 
+		//一个个依次处理fdRead集合中的有IO操作的sock
 		for (size_t n = 0;n<fdRead.fd_count; n++)
 		{
 			if (-1 == processor(fdRead.fd_array[n]))
