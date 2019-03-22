@@ -1,8 +1,18 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include<WinSock2.h>
-#include<Windows.h>
+#ifdef _WIN32
+	#include<WinSock2.h>
+	#include<Windows.h>
+#else
+	#include<unistd.h>//uni std
+	#include<arpa/inet.h>
+	#include<string.h>
+	#define SOCKET int
+	#define INVALID_SOCKET (SOCKET)(~0)
+	#define SOCKET_ERROR	(-1)
+#endif
+
 #include<stdio.h>
 #include<thread>
 #pragma comment(lib,"ws2_32.lib")//静态链接库
@@ -91,7 +101,7 @@ int processor(SOCKET _cSock)
 	DataHeader* header = (DataHeader*)szRecv;
 	if (nLen <= 0)
 	{
-		printf("与服务器断开连接，任务结束\n");
+		printf("disconnected with server，task end\n");
 		return -1;
 	}
 
@@ -102,14 +112,14 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		LoginResult* login_Result = (LoginResult*)szRecv;
-		printf("服务器返回的数据消息：CMD_LOGIN_RESULT，数据长度%d\n", login_Result->dataLength);
+		printf("server returned data：CMD_LOGIN_RESULT，data length%d\n", login_Result->dataLength);
 	}
 	break;
 	case CMD_LOGINOUT_RESULT:
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		LoginOutResult* loginout_Result = (LoginOutResult*)szRecv;
-		printf("服务器返回的数据消息：CMD_LOGINOUT_RESULT，数据长度%d\n", loginout_Result->dataLength);
+		printf("server returned data：CMD_LOGINOUT_RESULT，data length%d\n", loginout_Result->dataLength);
 	}
 	break;
 
@@ -117,7 +127,7 @@ int processor(SOCKET _cSock)
 	{
 		recv(_cSock, szRecv + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);//之前已经把header读取出来了，不能再从头读取了
 		NewUserJoin* userJoin = (NewUserJoin*)szRecv;
-		printf("服务器返回的数据消息：NEW_USER_JOIN，数据长度%d\n", userJoin->dataLength);
+		printf("server returned data：NEW_USER_JOIN，data length%d\n", userJoin->dataLength);
 	}
 	break;
 	}
@@ -151,7 +161,7 @@ void cmdThread(SOCKET _sock)
 		}
 		else
 		{
-			printf("不支持的命令\n");
+			printf("not support cmd\n");
 		}
 
 	}
@@ -161,33 +171,35 @@ void cmdThread(SOCKET _sock)
 int main()
 {
 	//启动windows socket2.x环境
+#ifdef WIN32
 	WORD ver = MAKEWORD(2, 2);
 	WSADATA dat;
 	WSAStartup(ver, &dat);
+#endif
 	////
 
 	SOCKET _sock = socket(AF_INET,SOCK_STREAM,0);
 	
 	if (INVALID_SOCKET == _sock)
 	{
-		printf("ERROR,建立失败...\n");
+		printf("ERROR,connect failed...\n");
 	}
 	else
 	{
-		printf("建立成功...\n");
+		printf("connect success...\n");
 	}
 	//2.连接服务器
 	sockaddr_in _sin = {};
 	_sin.sin_family = AF_INET;
 	_sin.sin_port = htons(4567);
-	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	_sin.sin_addr.s_addr = inet_addr("192.168.236.128");
 	if(SOCKET_ERROR == connect(_sock, (sockaddr*)&_sin, sizeof(sockaddr_in)))
 	{
-		printf("ERROR，建立socket失败...\n");
+		printf("ERROR，connect socket failed...\n");
 	}
 	else
 	{
-		printf("建立socket成功...\n");
+		printf("connect socket success...\n");
 	}
 
 	///创建线程函数
@@ -206,7 +218,7 @@ int main()
 		int ret = select(_sock, &fdReads, 0, 0, &t);
 		if (ret < 0)
 		{
-			printf("select任务结束\n");
+			printf("select task over\n");
 			break;
 		}
 
@@ -215,7 +227,7 @@ int main()
 			FD_CLR(_sock, &fdReads);
 			if (-1 == processor(_sock))
 			{
-				printf("seletc任务结束2\n");
+				printf("seletc tase over2\n");
 				break;
 			}
 		}
@@ -231,8 +243,10 @@ int main()
 
 	closesocket(_sock);
 
-	printf("已退出\n");
+	printf("exited\n");
 	getchar();
+#ifdef WIN32
 	WSACleanup();
+#endif
 	return 0;
 }
