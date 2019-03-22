@@ -178,16 +178,17 @@ int main()
 	{
 
 		//DataHeader header = {};
-		//伯克利 socket
-		fd_set fdRead;
+		//伯克利套接字 BSD socket
+		fd_set fdRead;//描述符（socket）集合
 		fd_set fdWrite;
 		fd_set fdExp;
 
+		//清理集合内容
 		FD_ZERO(&fdRead);//清空集合内容
 		FD_ZERO(&fdWrite);
 		FD_ZERO(&fdExp);
 
-
+		//将描述符（socket）加入到集合中
 		FD_SET(_sock,&fdRead);
 		FD_SET(_sock, &fdWrite);
 		FD_SET(_sock, &fdExp);
@@ -201,7 +202,7 @@ int main()
 
 		//nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
 		///既是所有文件描述符最大值，在windows中参数可以写为0
-		timeval t = {0,0};
+		timeval t = {1,0};
 
 		int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&t);
 		if (0 > ret)
@@ -210,7 +211,7 @@ int main()
 			break;
 		}
 		
-
+		//判断描述符是否在集合中
 		if (FD_ISSET(_sock, &fdRead))
 		{
 			FD_CLR(_sock, &fdRead);
@@ -225,15 +226,17 @@ int main()
 
 				printf("错误，接收到无效客户端SOCKET...\n");
 			}
-			//新用户加入通知其他人
-			for (int n = (int)g_clients.size() - 1; n >= 0; n--)
+			else
 			{
-				NewUserJoin userJoin;
-				send(g_clients[n],(const char*)&userJoin,sizeof(NewUserJoin),0);
+				//新用户加入通知其他人
+				for (int n = (int)g_clients.size() - 1; n >= 0; n--)
+				{
+					NewUserJoin userJoin;
+					send(g_clients[n],(const char*)&userJoin,sizeof(NewUserJoin),0);
+				}
+				g_clients.push_back(_cSock);
+				printf("新客户端加入：socket =%d ,IP = %s\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
 			}
-			g_clients.push_back(_cSock);
-			printf("新客户端加入：socket =%d ,IP = %s\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
-		
 		}
 
 		for (size_t n = 0;n<fdRead.fd_count; n++)

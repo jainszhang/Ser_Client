@@ -4,7 +4,7 @@
 #include<WinSock2.h>
 #include<Windows.h>
 #include<stdio.h>
-
+#include<thread>
 #pragma comment(lib,"ws2_32.lib")//静态链接库
 //ctrl + k ctrl + c注释代码，ctrl+u取消注释代码
 
@@ -123,6 +123,41 @@ int processor(SOCKET _cSock)
 	}
 }
 
+bool g_bRun = true;
+void cmdThread(SOCKET _sock)
+{
+	while (true)
+	{
+		char cmdBuf[256] = {};
+		scanf("%s", cmdBuf);
+		if (0 == strcmp(cmdBuf, "exit"))
+		{
+			g_bRun = false;
+			printf("退出\n");
+			break;
+		}
+		else if (0 == strcmp(cmdBuf, "login"))
+		{
+			Login login;
+			strcpy(login.userName, "zj");
+			strcpy(login.PassWord, "jainss");
+			send(_sock, (const char *)&login, sizeof(Login), 0);
+		}
+		else if (0 == strcmp(cmdBuf, "loginout"))
+		{
+			LoginOut loginout;
+			strcpy(loginout.userName, "zj");
+			send(_sock, (const char *)&loginout, sizeof(LoginOut), 0);
+		}
+		else
+		{
+			printf("不支持的命令\n");
+		}
+
+	}
+	
+}
+
 int main()
 {
 	//启动windows socket2.x环境
@@ -155,16 +190,18 @@ int main()
 		printf("建立socket成功...\n");
 	}
 
-
+	///创建线程函数
+	std::thread t1(cmdThread,_sock);
+	t1.detach();//和主线程分离
 
 
 	char cmdBuf[128] = {};
-	while (true)
+	while (g_bRun)
 	{
 		fd_set fdReads;
 		FD_ZERO(&fdReads);
 		FD_SET(_sock, &fdReads);
-		timeval t = { 0,0 };
+		timeval t = { 1,0 };
 		int ret = select(_sock, &fdReads, 0, 0, &t);
 		if (ret < 0)
 		{
@@ -181,14 +218,11 @@ int main()
 				break;
 			}
 		}
+		//线程thread
 		
-		printf("客户端空闲，处理其他任务\n");
-		Login login;
-		strcpy(login.userName, "zj");
-		strcpy(login.PassWord, "jainss");
 
-		send(_sock, (const char * )&login, sizeof(Login), 0);
-		//Sleep(1000);
+//		printf("客户端空闲，处理其他任务\n");
+
 
 	}
 
