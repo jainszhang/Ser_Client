@@ -18,6 +18,7 @@ enum CMD
 	CMD_LOGIN_RESULT,
 	CMD_LOGINOUT,
 	CMD_LOGINOUT_RESULT,
+	CMD_NEW_USER_JOIN,
 	CMD_ERROR
 };
 ///消息头
@@ -60,6 +61,7 @@ struct LoginOut :public DataHeader
 	}
 	char userName[32];
 };
+
 struct LoginOutResult :public DataHeader
 {
 	LoginOutResult()
@@ -69,6 +71,18 @@ struct LoginOutResult :public DataHeader
 		result = 0;
 	}
 	int result;
+
+};
+
+struct NewUserJoin :public DataHeader
+{
+	NewUserJoin()
+	{
+		dataLength = sizeof(NewUserJoin);
+		cmd = CMD_NEW_USER_JOIN;
+		sock = 0;
+	}
+	int sock;
 
 };
 
@@ -123,6 +137,7 @@ int processor(SOCKET _cSock)
 	break;
 	}
 }
+
 int main()
 {
 	//启动windows socket2.x环境
@@ -194,6 +209,8 @@ int main()
 			printf("select 任务结束、\n");
 			break;
 		}
+		
+
 		if (FD_ISSET(_sock, &fdRead))
 		{
 			FD_CLR(_sock, &fdRead);
@@ -207,6 +224,12 @@ int main()
 			{
 
 				printf("错误，接收到无效客户端SOCKET...\n");
+			}
+			//新用户加入通知其他人
+			for (int n = (int)g_clients.size() - 1; n >= 0; n--)
+			{
+				NewUserJoin userJoin;
+				send(g_clients[n],(const char*)&userJoin,sizeof(NewUserJoin),0);
 			}
 			g_clients.push_back(_cSock);
 			printf("新客户端加入：socket =%d ,IP = %s\n", (int)_cSock, inet_ntoa(clientAddr.sin_addr));
@@ -224,6 +247,7 @@ int main()
 				}
 			}
 		}
+		printf("客户端空闲，处理其他任务\n");
 	}
 
 	for (size_t n = g_clients.size() - 1; n >= 0; n--)
