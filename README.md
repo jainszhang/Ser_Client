@@ -18,3 +18,23 @@ select模型介绍：
 	三个参数一个用于检查可读性（readfds），一个用于检查可写性（writefds），另一个用于例外数据（ excepfds）
 	注意：select返回后，它会修改每个fd_set结构，删除那些不存在待决 I / O操作的套接字句柄。
 		意味着select输入时集合中的socket如果没有IO操作，经过select后该socket会被删除，有IO操作的sock则会被保留下来
+
+
+2019.3.23
+1.发送端
+	send
+	sendBuf	发送缓冲区
+	.
+	.网络传输层
+	.
+	.
+	接收端
+	recvBuf
+		recv
+			dataheader
+				dataBody
+
+
+2.缓冲区溢出/无法发送/造成阻塞
+把第二缓冲区变大以后就不会造成阻塞了，保证了底层的缓冲区不会充满溢出
+ 

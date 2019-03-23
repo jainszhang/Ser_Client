@@ -5,8 +5,8 @@
 //ctrl + k ctrl + c注释代码，ctrl+u取消注释代码
 
 
-
-void cmdThread(EasyTcpClient *client)
+bool g_bRun = true;
+void cmdThread()
 {
 	while (true)
 	{
@@ -14,11 +14,11 @@ void cmdThread(EasyTcpClient *client)
 		scanf("%s", cmdBuf);
 		if (0 == strcmp(cmdBuf, "exit"))
 		{
-			client->Close();
+			g_bRun = false;
 			printf("退出\n");
 			break;
 		}
-		else if (0 == strcmp(cmdBuf, "login"))
+		/*else if (0 == strcmp(cmdBuf, "login"))
 		{
 			Login login;
 			strcpy(login.userName, "zj");
@@ -32,7 +32,7 @@ void cmdThread(EasyTcpClient *client)
 			LoginOut loginout;
 			strcpy(loginout.userName, "zj");
 			client->SendData(&loginout);
-		}
+		}*/
 		else
 		{
 			printf("not support cmd\n");
@@ -44,27 +44,38 @@ void cmdThread(EasyTcpClient *client)
 
 int main()
 {
-	EasyTcpClient client;
-	int ret = client.InitSocket();
-	if (!ret)
+	const int cCount = 2;
+
+	EasyTcpClient* client[cCount];
+	for (int n = 0; n < cCount; n++)
 	{
-		//client.Connect("192.168.236.128", 4567);
-		client.Connect("10.201.17.179", 4568);
+		client[n] = new EasyTcpClient();
+		client[n]->Connect("192.168.236.128", 4567);
 	}
+
 
 	//启动UI线程
-	std::thread t1(cmdThread,&client);
+	std::thread t1(cmdThread);
 	t1.detach();//和主线程分离
 
-	while (client.isRun())
+	Login login;
+	strcpy(login.userName, "zhangjing");
+	strcpy(login.PassWord, "jains");
+	while (g_bRun)
 	{
-		if (!client.onRun())
-			break;
-		/*printf("client idle，processing other tasks...\n");
-		Sleep(1000);*/
+		
+		for (int n = 0; n < cCount; n++)
+		{
+			
+			client[n]->SendData(&login);
+			client[n]->onRun();
+		}
 	}
-
-	client.Close();
+	for (int n = 0; n < cCount; n++)
+	{
+		client[n]->Close();
+	}
+	
 	printf("exited\n");
 	getchar();
 

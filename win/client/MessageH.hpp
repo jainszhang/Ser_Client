@@ -14,8 +14,13 @@ enum CMD
 ///消息头
 struct DataHeader
 {
+	DataHeader()
+	{
+		dataLength = sizeof(DataHeader);
+		cmd = CMD_ERROR;
+	}
 	short dataLength;//表示数据长度
-	CMD cmd;//命令
+	short cmd;//命令
 };
 
 //DataPackage
@@ -28,6 +33,7 @@ struct Login :public DataHeader
 	}
 	char userName[32];
 	char PassWord[32];
+	char data[932];
 };
 
 struct LoginResult :public DataHeader
@@ -38,8 +44,10 @@ struct LoginResult :public DataHeader
 		cmd = CMD_LOGIN_RESULT;
 	}
 	int result;
-
+	char data[992];
 };
+
+
 
 struct LoginOut :public DataHeader
 {
