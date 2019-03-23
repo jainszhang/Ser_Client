@@ -4,7 +4,7 @@
 #include<WinSock2.h>
 #include<Windows.h>
 #include<stdio.h>
-
+#include<iostream>
 #include<vector>
 using namespace std;
 ////#pragma comment(lib,"ws2_32.lib")//静态链接库
@@ -25,7 +25,7 @@ enum CMD
 struct DataHeader
 {
 	short dataLength;//表示数据长度
-	short cmd;//命令
+	CMD cmd;//命令
 };
 
 //DataPackage
@@ -96,6 +96,7 @@ int processor(SOCKET _cSock)
 
 	//5.接收客户端的数据头包
 	int nLen = recv(_cSock, (char *)szRecv, sizeof(DataHeader), 0);
+
 	DataHeader* header = (DataHeader*)szRecv;
 	if (nLen <= 0)
 	{
@@ -112,9 +113,8 @@ int processor(SOCKET _cSock)
 		Login* login = (Login*)szRecv;
 		printf("收到header--命令%d，数据长度%d，username=%s,passwd=%s\n", login->cmd, login->dataLength, login->userName, login->PassWord);
 		LoginResult ret;
-
+		ret.result = 1;
 		send(_cSock, (char *)&ret, sizeof(LoginResult), 0);
-
 	}
 	break;
 	case CMD_LOGINOUT:
@@ -124,6 +124,7 @@ int processor(SOCKET _cSock)
 		LoginOut* loginout = (LoginOut*)szRecv;
 		printf("收到header--命令%d，数据长度%d，username=%s\n", loginout->cmd, loginout->dataLength, loginout->userName);
 		LoginOutResult ret;
+		ret.result = 2;
 		send(_cSock, (char *)&ret, sizeof(LoginOutResult), 0);
 
 	}
@@ -254,7 +255,7 @@ int main()
 				}
 			}
 		}
-		printf("客户端空闲，处理其他任务\n");
+		printf("服务器空闲，处理其他任务\n");
 	}
 
 	for (size_t n = g_clients.size() - 1; n >= 0; n--)
