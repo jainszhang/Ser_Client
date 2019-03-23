@@ -48,7 +48,8 @@ int main()
 	int ret = client.InitSocket();
 	if (!ret)
 	{
-		client.Connect("192.168.236.128", 4567);
+		//client.Connect("192.168.236.128", 4567);
+		client.Connect("10.201.17.179", 4568);
 	}
 
 	//??UI??
