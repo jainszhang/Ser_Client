@@ -44,7 +44,7 @@ public:
 
 		if (INVALID_SOCKET != _sock)
 		{
-			printf("<sock = %d> close old connection...\n",_sock);
+			//printf("<sock = %d> close old connection...\n",_sock);
 			Close();
 		}
 
@@ -52,12 +52,12 @@ public:
 
 		if (INVALID_SOCKET == _sock)
 		{
-			printf("ERROR,init sock failed...\n");
+			//printf("ERROR,init sock failed...\n");
 			return -1;
 		}
 		else
 		{
-			printf("init sock success...\n");
+			//printf("init sock success...\n");
 			return 0;
 		}
 		
@@ -96,7 +96,7 @@ public:
 		}
 		else
 		{
-			printf("connect socket success...\n");
+			//printf("connect socket success...\n");
 		}
 		return ret;
 	}
