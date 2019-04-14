@@ -118,3 +118,21 @@ void interface()
     
     printCount.join();
 }
+
+//thread 的两种死法
+void joinWorker()
+{
+    cout<<"hello world"<<endl;
+}
+void threadDied()
+{
+    thread j(joinWorker);
+    //    thread j1(ff);
+    //    j1.join();//阻塞模式，子线程执行完毕后，主线程才继续执行.thread::join()会清理子线程相关的内存空间，此后thread object将不再和这个子线程相关了，即thread object不再joinable了，所以join对于一个子线程来说只可以被调用一次
+    //    j.join();
+    cout<<j.joinable()<<endl;
+    j.detach();//非阻塞模式，子线程分离，子和主两者同时进行
+    cout<<"main"<<endl;
+    this_thread::sleep_for(std::chrono::seconds(7));
+    cout<<"over"<<endl;
+}
